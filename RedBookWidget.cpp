@@ -66,8 +66,12 @@ void RedBookWidget::setupGeometry()
 
 void RedBookWidget::setupProgram()
 {
-    _shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "src/VertexTest.txt");
-    _shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, "src/FragmentTest.txt");
+    if (!_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/VertexTest.txt"))
+        qDebug() << "VERTEX SHADER LOG: " << _shaderProgram.log();
+
+    if (!_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/FragmentTest.txt"))
+        qDebug() << "FRAGMENT SHADER LOG: " << _shaderProgram.log();
+
     _shaderProgram.link();
     _shaderProgram.bind();
 }
