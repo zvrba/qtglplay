@@ -8,7 +8,10 @@ _uSegments(uSegments), _vSegments(vSegments), _closeU(closeU), _closeV(closeV)
     _uvVertex.resize(_uSegments * _vSegments);
     _uvNormal.resize(_uSegments * _vSegments, glm::vec3(0));
     _divideCount.resize(_uSegments * _vSegments, 0);
+}
 
+void SurfaceGenerator::generate()
+{
     generateUVVertex();
     generateTrianglesAndUVs();
     generateNormals();

@@ -34,6 +34,7 @@ protected:
 
 public:
     SurfaceGenerator(int uSegments, int vSegments, bool closeU, bool closeV);
+    void generate();
     const std::vector<glm::vec3>& getTriangles() const { return _triangles; }
     const std::vector<glm::vec3>& getNormals() const { return _normals; }
     const std::vector<glm::vec2>& getUVs() const { return _uvs; }
