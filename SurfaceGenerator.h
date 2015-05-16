@@ -16,14 +16,21 @@ class SurfaceGenerator
     std::vector<glm::vec3> _triangles, _normals;
     std::vector<glm::vec2> _uvs;
     std::vector<short> _divideCount;
+    std::vector<float> _buffer;
+
 
     int VI(int u, int v) const { return u * _vSegments + v; }
-
     void generateUVVertex();
     void generateTrianglesAndUVs();
     void generateNormals();
     void halfQuadVertex(int u, int v, int h);
     void halfQuadNormal(int u, int v, int h);
+    
+    template<typename T>
+    static void assign(T vec, std::vector<float>::iterator &it)
+    {
+        for (auto i = 0; i < vec.size(); ++i) *it++ = vec[i];
+    }
 
 protected:
     int getUSegmentCount() const { return _uSegments; }
@@ -34,10 +41,8 @@ protected:
 
 public:
     SurfaceGenerator(int uSegments, int vSegments, bool closeU, bool closeV);
-    void generate();
-    const std::vector<glm::vec3>& getTriangles() const { return _triangles; }
-    const std::vector<glm::vec3>& getNormals() const { return _normals; }
-    const std::vector<glm::vec2>& getUVs() const { return _uvs; }
+    const std::vector<float> &generate();
+    int getVertexCount() const { return _buffer.size() / 8; }
 };
 
 #endif

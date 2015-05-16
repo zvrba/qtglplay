@@ -10,11 +10,37 @@ _uSegments(uSegments), _vSegments(vSegments), _closeU(closeU), _closeV(closeV)
     _divideCount.resize(_uSegments * _vSegments, 0);
 }
 
-void SurfaceGenerator::generate()
+// Return the packed buffer as a vector.
+const std::vector<float>& SurfaceGenerator::generate()
 {
     generateUVVertex();
     generateTrianglesAndUVs();
     generateNormals();
+
+    // Pack data into a single buffer.  We have 8 floats per triangle (position, normal, UV)
+    assert(_triangles.size() == _normals.size() && _triangles.size() == _uvs.size());
+    assert(_triangles.size() % 3 == 0);
+    
+    auto triangleCount = _triangles.size() / 3;
+    _buffer.resize(8*triangleCount);
+    auto itCoord = _buffer.begin();
+    auto itNorm = itCoord + 3*triangleCount;
+    auto itUV = itNorm + 3*triangleCount;
+
+    for (auto i = 0; i < _triangles.size(); ++i) {
+        assign(_triangles[i], itCoord);
+        assign(_normals[i], itNorm);
+        assign(_uvs[i], itUV);
+    }
+
+    _uvVertex.clear();
+    _uvNormal.clear();
+    _triangles.clear();
+    _normals.clear();
+    _uvs.clear();
+    _divideCount.clear();
+
+    return _buffer;
 }
 
 void SurfaceGenerator::generateUVVertex()

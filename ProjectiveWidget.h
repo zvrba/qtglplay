@@ -10,8 +10,6 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 
-#include <complex>
-
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class ProjectiveWidget : public QOpenGLWidget, protected QOpenGLFunctions
