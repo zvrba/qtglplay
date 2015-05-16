@@ -75,3 +75,68 @@ void ProjectiveWidget::setupProgram()
     _shaderProgram.link();
     _shaderProgram.bind();
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+void BoysGenerator::bryantsParametrization(int uSegments, int vSegments)
+{
+    glm::vec3 quadVertex[4];
+    glm::vec2 quadUV[4];
+
+    _uvs.reserve(uSegments*vSegments);
+    _vertices.reserve(uSegments*vSegments);
+    _normals.reserve(uSegments*vSegments);
+    _normalCounts.reserve(uSegments*vSegments);
+
+    // Generate UVs and vertex coordinates.
+
+    for (int u = 0; u < uSegments; ++u)
+    for (int v = 0; v < vSegments; ++v)
+    {
+        const double r = (double)u / uSegments;
+        const double phi = (double)v / vSegments;
+
+        _uvs.push_back(glm::vec2(r, phi));
+        _vertices.push_back(glm::vec3(bryant(fromPolar(r, phi))));
+    }
+
+    generateTriangles(uSegments, vSegments);
+    generateNormals(uSegments, vSegments);
+}
+
+void BoysGenerator::generateTriangles(int uSegments, int vSegments)
+{
+    for (int u = 0; u < uSegments; ++u)
+    for (int v = 0; v < vSegments; ++v)
+    {
+        generateTriangle(u, (u+1) % uSegments, 
+    }
+}
+
+void BoysGenerator::generateTriangle(int i0, int i1, int i2)
+{
+    auto v0 = _vertices[i0], v1 = _vertices[i1], v2 = _vertices[i2];
+
+}
+
+glm::vec3 BoysGenerator::bryant(complex z)
+{
+    // TODO! FIX! This will be much more precise in polar coordinates!
+    complex num1 = z * (complex(1) - pow(z, 4));
+    complex num2 = z * (complex(1) + pow(z, 4));
+    complex num3 = complex(1) + pow(z, 6);
+    complex den = pow(z, 6) + complex(sqrt(5)) * pow(z, 3) - complex(1);
+
+    double g1 = -1.5 * (num1 / den).imag();
+    double g2 = -1.5 * (num2 / den).real();
+    double g3 = (num3 / den).imag() - 0.5;
+    double g = g1*g1 + g2*g2 + g3*g3;
+
+    return glm::vec3(g1/g, g2/g, g3/g);
+}
+
+BoysGenerator::complex BoysGenerator::fromPolar(double r, double phi)
+{
+    return complex(r*cos(phi), r*sin(phi));
+}
+

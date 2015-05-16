@@ -10,7 +10,32 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 
+#include <complex>
+
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
+
+class BoysGenerator
+{
+    QVector<glm::vec2> _uvs, _renderUVs;
+    QVector<glm::vec3> _vertices, _normals, _renderTriangles, _renderNormals;
+    QVector<unsigned short> _normalCounts;
+
+    void generateTriangles(int uSegments, int vSegments);
+    void generateNormals(int uSegments, int vSegments);
+    void generateTriangle(int i0, int i1, int i2);
+
+    using complex = std::complex<double>;
+    static complex fromPolar(double r, double phi);
+    static glm::vec3 bryant(complex z);
+
+
+public:
+    const QVector<glm::vec3> &getTriangles() const { return _renderTriangles; }
+    const QVector<glm::vec3> &getNormals() const { return _renderNormals; }
+    const QVector<glm::vec2> &getUVs() const { return _renderUVs; }
+
+    void bryantsParametrization(int uSegments, int vSegments);
+};
 
 class ProjectiveWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -32,6 +57,7 @@ private:
     void setupGeometry();
     void setupProgram();
     void cleanup();
+
 
     QOpenGLVertexArrayObject _vertexArray;
     QOpenGLBuffer _vertexBuffer;
