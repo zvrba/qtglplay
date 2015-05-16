@@ -20,12 +20,13 @@ const std::vector<float>& SurfaceGenerator::generate()
     // Pack data into a single buffer.  We have 8 floats per triangle (position, normal, UV)
     assert(_triangles.size() == _normals.size() && _triangles.size() == _uvs.size());
     assert(_triangles.size() % 3 == 0);
-    
-    auto triangleCount = _triangles.size() / 3;
-    _buffer.resize(8*triangleCount);
+
+    _vertexCount = _triangles.size();
+    _buffer.resize(8*_vertexCount);
+
     auto itCoord = _buffer.begin();
-    auto itNorm = itCoord + 3*triangleCount;
-    auto itUV = itNorm + 3*triangleCount;
+    auto itNorm = itCoord + 3*_vertexCount;
+    auto itUV = itNorm + 3*_vertexCount;
 
     for (auto i = 0; i < _triangles.size(); ++i) {
         assign(_triangles[i], itCoord);

@@ -89,6 +89,9 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
+    BoysGenerator bg(128, 128);
+    auto data = bg.generate();
+
     static const GLfloat vertexData[] =
     {
         -0.90, -0.90,

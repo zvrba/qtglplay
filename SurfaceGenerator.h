@@ -12,11 +12,16 @@ class SurfaceGenerator
     const int _uSegments, _vSegments;
     const bool _closeU, _closeV;
 
+    // Temporary data.
     std::vector<glm::vec3> _uvVertex, _uvNormal;
+    // 3 elements per triangle
     std::vector<glm::vec3> _triangles, _normals;
     std::vector<glm::vec2> _uvs;
     std::vector<short> _divideCount;
+
+    // Outputs
     std::vector<float> _buffer;
+    int _vertexCount;
 
 
     int VI(int u, int v) const { return u * _vSegments + v; }
@@ -42,7 +47,8 @@ protected:
 public:
     SurfaceGenerator(int uSegments, int vSegments, bool closeU, bool closeV);
     const std::vector<float> &generate();
-    int getVertexCount() const { return _buffer.size() / 8; }
+    int getVertexCount() const { return _vertexCount; }
+    int getTriangleCount() const { return _vertexCount / 3; }   // vertices are duplicated ATM
 };
 
 #endif
