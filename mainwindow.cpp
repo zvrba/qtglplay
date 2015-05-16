@@ -40,10 +40,10 @@
 
 #include <QMessageBox>
 #include "mainwindow.h"
-#include "RedBookWidget.h"
+#include "ProjectiveWidget.h"
 
 MainWindow::MainWindow()
 {
     Q_ASSERT(!centralWidget());
-    setCentralWidget(new RedBookWidget(this));
+    setCentralWidget(new ProjectiveWidget(this));
 }
