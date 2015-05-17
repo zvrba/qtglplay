@@ -37,6 +37,7 @@ private:
     void setupGeometry();
     void setupProgram();
     void setupXform();
+    void resetXform();
     void cleanup();
 
     static float radians(int angle) { return (float)(angle % 360) * glm::pi<float>() / 180.0f; }

@@ -1,6 +1,7 @@
 #include <complex>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <QKeyEvent>
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
@@ -66,10 +67,15 @@ void ProjectiveWidget::initializeGL()
 
     setupGeometry();
     setupProgram();
-
-    _rx = _ry = _rz = _tz = 0;
-    _znear = 1;
+    resetXform();
     // resizeGL called also after initialization
+}
+
+void ProjectiveWidget::resetXform()
+{
+    _rx = _ry = _rz = 20;
+    _tz = -5;
+    _znear = 1;
 }
 
 void ProjectiveWidget::paintGL()
@@ -97,7 +103,7 @@ void ProjectiveWidget::setupXform()
         auto rx = rotate(I, radians(_rx), glm::vec3(1, 0, 0));
         auto ry = rotate(rx, radians(_ry), glm::vec3(0, 1, 0));
         auto rz = rotate(ry, radians(_rz), glm::vec3(0, 0, 1));
-        _objectXform = rz;
+        _objectXform = glm::translate(rz, glm::vec3(_tz / 10.0f));
     }
 
     {
@@ -108,9 +114,39 @@ void ProjectiveWidget::setupXform()
     glUniformMatrix4fv(_vmpLocation, 1, GL_FALSE, glm::value_ptr(_xform));
 }
 
+// lower-case: lower; upper-case: higher value
+// xX,yY,zZ: rotations around these axes
+// tT: translation along Z axis
+// nN: near plane
+// space: resets all transforms to defaults
 void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
 {
-    return; // NOP
+    int *target = nullptr;
+    int delta = 0;
+
+    if (ev->text().isEmpty())   // Happens for modifiers (shift, etc)
+        return;
+
+    switch (ev->text().toUpper().at(0).toLatin1())
+    {
+    case 'X': target = &_rx; delta = 12; break;
+    case 'Y': target = &_ry; delta = 12; break;
+    case 'Z': target = &_rz; delta = 12; break;
+    case 'T': target = &_tz; delta = 1; break;
+    case 'N': target = &_znear; delta = 1; break;
+    default:
+        qDebug() << "UNHANDLED KEY: " << ev->text();
+        return;
+    }
+    
+    if (target)
+    {
+        if (ev->text() != ev->text().toUpper())
+            delta = -delta;
+        *target += delta;
+        setupXform();
+        update();
+    }
 }
 
 void ProjectiveWidget::cleanup()
