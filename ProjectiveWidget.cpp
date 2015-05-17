@@ -82,8 +82,9 @@ void ProjectiveWidget::resetXform()
 void ProjectiveWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    QOpenGLVertexArrayObject::Binder binder(&_vao);
     _program.setUniformValue("ViewModelProject", _xform);
+    QOpenGLVertexArrayObject::Binder binder(&_vao);
+    //GLenum err = glGetError();
     //glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
 
     for (int i = 0; i < _triangleCount; ++i)
@@ -136,6 +137,10 @@ void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
     case 'Z': target = &_rz; delta = 12; break;
     case 'T': target = &_tz; delta = 1; break;
     case 'N': target = &_znear; delta = 1; break;
+    case ' ':
+        qDebug() << "R: " << _rx << " " << _ry << " " << _rz;
+        qDebug() << "T: " << _tz;
+        break;
     default:
         qDebug() << "UNHANDLED KEY: " << ev->text();
         return;
@@ -161,7 +166,7 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
-    BoysGenerator bg(128, 128);
+    BoysGenerator bg(32, 32);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
     _triangleCount = bg.getTriangleCount();
