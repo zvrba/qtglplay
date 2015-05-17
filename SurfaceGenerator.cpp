@@ -6,7 +6,7 @@ _uSegments(uSegments), _vSegments(vSegments), _closeU(closeU), _closeV(closeV)
 {
     // TODO: close flags not yet implemented; always assumes closed on both parameters.
     _uvVertex.resize(_uSegments * _vSegments);
-    _uvNormal.resize(_uSegments * _vSegments, glm::vec3(0));
+    _uvNormal.resize(_uSegments * _vSegments, QVector3D(0, 0, 0));
     _divideCount.resize(_uSegments * _vSegments, 0);
 }
 
@@ -21,7 +21,7 @@ const std::vector<float>& SurfaceGenerator::generate()
     assert(_triangles.size() == _normals.size() && _triangles.size() == _uvs.size());
     assert(_triangles.size() % 3 == 0);
 
-    _vertexCount = _triangles.size();
+    _vertexCount = (int)_triangles.size();
     _buffer.resize(8*_vertexCount);
 
     auto itCoord = _buffer.begin();
@@ -29,9 +29,9 @@ const std::vector<float>& SurfaceGenerator::generate()
     auto itUV = itNorm + 3*_vertexCount;
 
     for (auto i = 0; i < _triangles.size(); ++i) {
-        assign(_triangles[i], itCoord);
-        assign(_normals[i], itNorm);
-        assign(_uvs[i], itUV);
+        assign(3, _triangles[i], itCoord);
+        assign(3, _normals[i], itNorm);
+        assign(2, _uvs[i], itUV);
     }
 
     _uvVertex.clear();
@@ -85,8 +85,8 @@ void SurfaceGenerator::halfQuadVertex(int u, int v, int h)
     assert(h == 0 || h == 1);
     int u1 = (u+1) % _uSegments, v1 = (v+1) % _vSegments;
     int i[4] = { VI(u, v), VI(u1, v), VI(u1, v1), VI(u, v1) };
-    glm::vec3 c[3] = { _uvVertex[i[0]], _uvVertex[i[1 + h]], _uvVertex[i[2 + h]] };
-    glm::vec3 n = normalize(cross(c[2]-c[0], c[1]-c[0]));
+    QVector3D c[3] = { _uvVertex[i[0]], _uvVertex[i[1 + h]], _uvVertex[i[2 + h]] };
+    QVector3D n = QVector3D::normal(c[0], c[1], c[2]);
     
     _triangles.push_back(c[0]); _uvs.push_back(UV(u, v));
     _triangles.push_back(c[1]); _uvs.push_back(UV(u1, !h ? v : v1));

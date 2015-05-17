@@ -9,10 +9,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
-
-#define GLM_FORCE_SIZE_FUNC
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
+#include <QMatrix4x4>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -40,21 +37,18 @@ private:
     void resetXform();
     void cleanup();
 
-    static float radians(int angle) { return (float)(angle % 360) * glm::pi<float>() / 180.0f; }
+    static float radians(int angle) { return (float)(angle % 360) * 3.141593f / 180.0f; }
 
     // Object data & state. We have only a single object.
     int _vertexCount, _triangleCount;
     int _rx, _ry, _rz;  // Axis rotations in degrees.
     int _tz;            // Translation along z, multiplied by 10.
     int _znear;
-    glm::mat4 _objectXform;
-    glm::mat4 _perspXform;
-    glm::mat4 _xform;
+    QMatrix4x4 _objectXform, _perspXform, _xform;
 
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _vbo;
     QOpenGLShaderProgram _program;
-    int _vmpLocation;
 };
 
 #endif

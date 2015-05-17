@@ -1,7 +1,6 @@
 #include <complex>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <QKeyEvent>
+#include <QVector3D>
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
@@ -14,17 +13,17 @@ class BoysGenerator : public SurfaceGenerator
         return complex(r*cos(phi), r*sin(phi));
     }
 
-    static glm::vec3 bryant(complex z);
+    static QVector3D bryant(complex z);
 
 protected:
-    virtual glm::vec2 UV(int u, int v) const override
+    virtual QVector2D UV(int u, int v) const override
     {
-        return glm::vec2((float)u / getUSegmentCount(), (float)v / getVSegmentCount()); // TODO: should not be linear.
+        return QVector2D((float)u / getUSegmentCount(), (float)v / getVSegmentCount()); // TODO: should not be linear.
     }
 
-    virtual glm::vec3 F(glm::vec2 uv) const override
+    virtual QVector3D F(QVector2D uv) const override
     {
-        return bryant(fromPolar(uv.x, uv.y));
+        return bryant(fromPolar(uv.x(), uv.y()));
     }
 
 public:
@@ -32,7 +31,7 @@ public:
     { }
 };
 
-glm::vec3 BoysGenerator::bryant(complex z)
+QVector3D BoysGenerator::bryant(complex z)
 {
     // TODO! FIX! This will be much more precise in polar coordinates!
     complex num1 = z * (complex(1) - pow(z, 4));
@@ -45,7 +44,7 @@ glm::vec3 BoysGenerator::bryant(complex z)
     double g3 = (num3 / den).imag() - 0.5;
     double g = g1*g1 + g2*g2 + g3*g3;
 
-    return glm::vec3(g1 / g, g2 / g, g3 / g);
+    return QVector3D(g1 / g, g2 / g, g3 / g);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -99,19 +98,20 @@ void ProjectiveWidget::resizeGL(int width, int height)
 void ProjectiveWidget::setupXform()
 {
     {
-        glm::mat4 I(1); // start with identity matrix
-        auto rx = rotate(I, radians(_rx), glm::vec3(1, 0, 0));
-        auto ry = rotate(rx, radians(_ry), glm::vec3(0, 1, 0));
-        auto rz = rotate(ry, radians(_rz), glm::vec3(0, 0, 1));
-        _objectXform = glm::translate(rz, glm::vec3(_tz / 10.0f));
+        _objectXform.setToIdentity();
+        _objectXform.rotate(radians(_rx), 1, 0, 0);
+        _objectXform.rotate(radians(_ry), 0, 1, 0);
+        _objectXform.rotate(radians(_rz), 0, 0, 1);
+        _objectXform.translate(0, 0, _tz / 10.0f);
     }
 
     {
-        _perspXform = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
+        _perspXform.setToIdentity();
+        _perspXform.frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
     }
 
     _xform = _perspXform * _objectXform;
-    glUniformMatrix4fv(_vmpLocation, 1, GL_FALSE, glm::value_ptr(_xform));
+    _program.setUniformValue("ViewModelProject", _xform);
 }
 
 // lower-case: lower; upper-case: higher value
@@ -186,8 +186,5 @@ void ProjectiveWidget::setupProgram()
 
     _program.link();
     _program.bind();
-    _vmpLocation = _program.uniformLocation("ViewModelProject");
-    if (_vmpLocation < 0)
-        qDebug() << "uniform location not found";
 }
 
