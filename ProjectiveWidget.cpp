@@ -23,7 +23,7 @@ protected:
 
     virtual QVector3D F(QVector2D uv) const override
     {
-        return bryant(fromPolar(uv.x(), uv.y()));
+        return bryant(fromPolar(uv.x(), uv.y() * 2 * 3.141593f));
     }
 
 public:
