@@ -103,9 +103,9 @@ void ProjectiveWidget::setupXform()
 {
     {
         _objectXform.setToIdentity();
-        _objectXform.rotate(radians(_rx), 1, 0, 0);
-        _objectXform.rotate(radians(_ry), 0, 1, 0);
-        _objectXform.rotate(radians(_rz), 0, 0, 1);
+        _objectXform.rotate(_rx, 1, 0, 0);
+        _objectXform.rotate(_ry, 0, 1, 0);
+        _objectXform.rotate(_rz, 0, 0, 1);
         _objectXform.translate(0, 0, _tz / 10.0f);
     }
 
