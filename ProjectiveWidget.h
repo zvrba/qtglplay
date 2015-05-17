@@ -33,10 +33,10 @@ private:
     void setupProgram();
     void cleanup();
 
-
-    QOpenGLVertexArrayObject _vertexArray;
-    QOpenGLBuffer _vertexBuffer;
-    QOpenGLShaderProgram _shaderProgram;
+    // We have only a single object.
+    QOpenGLVertexArrayObject _vao;
+    QOpenGLBuffer _vbo;
+    QOpenGLShaderProgram _program;
 };
 
 #endif

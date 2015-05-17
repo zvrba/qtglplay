@@ -47,7 +47,7 @@ glm::vec3 BoysGenerator::bryant(complex z)
 
 /////////////////////////////////////////////////////////////////////////////
 
-ProjectiveWidget::ProjectiveWidget(QWidget*) : _vertexBuffer(QOpenGLBuffer::VertexBuffer)
+ProjectiveWidget::ProjectiveWidget(QWidget*) : _vbo(QOpenGLBuffer::VertexBuffer)
 {
 }
 
@@ -69,7 +69,7 @@ void ProjectiveWidget::initializeGL()
 void ProjectiveWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    QOpenGLVertexArrayObject::Binder binder(&_vertexArray);
+    QOpenGLVertexArrayObject::Binder binder(&_vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glFlush();
 }
@@ -82,9 +82,9 @@ void ProjectiveWidget::resizeGL(int, int)
 void ProjectiveWidget::cleanup()
 {
     makeCurrent();
-    _vertexArray.destroy();
-    _vertexBuffer.destroy();
-    _shaderProgram.release();
+    _vao.destroy();
+    _vbo.destroy();
+    _program.release();
 }
 
 void ProjectiveWidget::setupGeometry()
@@ -102,13 +102,13 @@ void ProjectiveWidget::setupGeometry()
         -0.85,  0.90
     };
 
-    _vertexArray.create();
-    QOpenGLVertexArrayObject::Binder binder(&_vertexArray);
+    _vao.create();
+    QOpenGLVertexArrayObject::Binder binder(&_vao);
 
-    _vertexBuffer.create();
-    _vertexBuffer.bind();
-    _vertexBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _vertexBuffer.allocate(vertexData, sizeof(vertexData));
+    _vbo.create();
+    _vbo.bind();
+    _vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    _vbo.allocate(vertexData, sizeof(vertexData));
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
@@ -116,13 +116,13 @@ void ProjectiveWidget::setupGeometry()
 
 void ProjectiveWidget::setupProgram()
 {
-    if (!_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/VertexTest.txt"))
-        qDebug() << "VERTEX SHADER LOG: " << _shaderProgram.log();
+    if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/VertexTest.txt"))
+        qDebug() << "VERTEX SHADER LOG: " << _program.log();
 
-    if (!_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/FragmentTest.txt"))
-        qDebug() << "FRAGMENT SHADER LOG: " << _shaderProgram.log();
+    if (!_program.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/FragmentTest.txt"))
+        qDebug() << "FRAGMENT SHADER LOG: " << _program.log();
 
-    _shaderProgram.link();
-    _shaderProgram.bind();
+    _program.link();
+    _program.bind();
 }
 
