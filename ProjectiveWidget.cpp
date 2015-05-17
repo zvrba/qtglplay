@@ -49,7 +49,9 @@ QVector3D BoysGenerator::bryant(complex z)
 
 /////////////////////////////////////////////////////////////////////////////
 
-ProjectiveWidget::ProjectiveWidget(QWidget*) : _vbo(QOpenGLBuffer::VertexBuffer)
+ProjectiveWidget::ProjectiveWidget(QWidget*) : 
+    _vbo(QOpenGLBuffer::VertexBuffer),
+    _program(this)
 {
 }
 
@@ -64,23 +66,24 @@ void ProjectiveWidget::initializeGL()
     initializeOpenGLFunctions();
     glClearColor(0, 0, 0, 1);
 
+    loadProgram();
     setupGeometry();
-    setupProgram();
     resetXform();
     // resizeGL called also after initialization
 }
 
 void ProjectiveWidget::resetXform()
 {
-    _rx = _ry = _rz = 20;
-    _tz = -5;
+    _rx = _ry = _rz = 0;
+    _tz = 0;
     _znear = 1;
 }
 
 void ProjectiveWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     QOpenGLVertexArrayObject::Binder binder(&_vao);
+    _program.setUniformValue("ViewModelProject", _xform);
     //glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
 
     for (int i = 0; i < _triangleCount; ++i)
@@ -111,7 +114,6 @@ void ProjectiveWidget::setupXform()
     }
 
     _xform = _perspXform * _objectXform;
-    _program.setUniformValue("ViewModelProject", _xform);
 }
 
 // lower-case: lower; upper-case: higher value
@@ -168,15 +170,15 @@ void ProjectiveWidget::setupGeometry()
     QOpenGLVertexArrayObject::Binder binder(&_vao);
 
     _vbo.create();
-    _vbo.bind();
     _vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    _vbo.bind();
     _vbo.allocate(&shapeData[0], shapeData.size() * sizeof(float));
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
+    _program.setAttributeBuffer("Vertex", GL_FLOAT, 0, 3);
+    _program.enableAttributeArray("Vertex");
 }
 
-void ProjectiveWidget::setupProgram()
+void ProjectiveWidget::loadProgram()
 {
     if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/Perspective.txt"))
         qDebug() << "VERTEX SHADER LOG: " << _program.log();
@@ -187,4 +189,3 @@ void ProjectiveWidget::setupProgram()
     _program.link();
     _program.bind();
 }
-

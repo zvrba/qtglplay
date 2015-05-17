@@ -32,7 +32,7 @@ protected:
 
 private:
     void setupGeometry();
-    void setupProgram();
+    void loadProgram();
     void setupXform();
     void resetXform();
     void cleanup();
