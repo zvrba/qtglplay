@@ -46,4 +46,5 @@ MainWindow::MainWindow()
 {
     Q_ASSERT(!centralWidget());
     setCentralWidget(new ProjectiveWidget(this));
+    centralWidget()->setFocus();    // Keyboard events!
 }

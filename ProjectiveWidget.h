@@ -10,6 +10,10 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 
+#define GLM_FORCE_SIZE_FUNC
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 class ProjectiveWidget : public QOpenGLWidget, protected QOpenGLFunctions
@@ -27,16 +31,29 @@ protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
+    void keyPressEvent(QKeyEvent*) override;
 
 private:
     void setupGeometry();
     void setupProgram();
+    void setupXform();
     void cleanup();
 
-    // We have only a single object.
+    static float radians(int angle) { return (float)(angle % 360) * glm::pi<float>() / 180.0f; }
+
+    // Object data & state. We have only a single object.
+    int _vertexCount, _triangleCount;
+    int _rx, _ry, _rz;  // Axis rotations in degrees.
+    int _tz;            // Translation along z, multiplied by 10.
+    int _znear;
+    glm::mat4 _objectXform;
+    glm::mat4 _perspXform;
+    glm::mat4 _xform;
+
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _vbo;
     QOpenGLShaderProgram _program;
+    int _vmpLocation;
 };
 
 #endif

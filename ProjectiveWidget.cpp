@@ -1,4 +1,6 @@
 #include <complex>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
@@ -64,17 +66,49 @@ void ProjectiveWidget::initializeGL()
 
     setupGeometry();
     setupProgram();
+
+    _rx = _ry = _rz = _tz = 0;
+    _znear = 1;
+    // resizeGL called also after initialization
 }
 
 void ProjectiveWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     QOpenGLVertexArrayObject::Binder binder(&_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
+
+    for (int i = 0; i < _triangleCount; ++i)
+        glDrawArrays(GL_LINE_LOOP, 3*i, 3);
+
     glFlush();
 }
 
-void ProjectiveWidget::resizeGL(int, int)
+void ProjectiveWidget::resizeGL(int width, int height)
+{
+    glViewport(0, 0, width, height);
+    setupXform();
+}
+
+void ProjectiveWidget::setupXform()
+{
+    {
+        glm::mat4 I(1); // start with identity matrix
+        auto rx = rotate(I, radians(_rx), glm::vec3(1, 0, 0));
+        auto ry = rotate(rx, radians(_ry), glm::vec3(0, 1, 0));
+        auto rz = rotate(ry, radians(_rz), glm::vec3(0, 0, 1));
+        _objectXform = rz;
+    }
+
+    {
+        _perspXform = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
+    }
+
+    _xform = _perspXform * _objectXform;
+    glUniformMatrix4fv(_vmpLocation, 1, GL_FALSE, glm::value_ptr(_xform));
+}
+
+void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
 {
     return; // NOP
 }
@@ -90,17 +124,9 @@ void ProjectiveWidget::cleanup()
 void ProjectiveWidget::setupGeometry()
 {
     BoysGenerator bg(128, 128);
-    auto data = bg.generate();
-
-    static const GLfloat vertexData[] =
-    {
-        -0.90, -0.90,
-         0.85, -0.90,
-        -0.90,  0.85,
-         0.90, -0.85,
-         0.90,  0.90,
-        -0.85,  0.90
-    };
+    auto shapeData = bg.generate();
+    _vertexCount = bg.getVertexCount();
+    _triangleCount = bg.getTriangleCount();
 
     _vao.create();
     QOpenGLVertexArrayObject::Binder binder(&_vao);
@@ -108,15 +134,15 @@ void ProjectiveWidget::setupGeometry()
     _vbo.create();
     _vbo.bind();
     _vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _vbo.allocate(vertexData, sizeof(vertexData));
+    _vbo.allocate(&shapeData[0], shapeData.size() * sizeof(float));
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 }
 
 void ProjectiveWidget::setupProgram()
 {
-    if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/VertexTest.txt"))
+    if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/Perspective.txt"))
         qDebug() << "VERTEX SHADER LOG: " << _program.log();
 
     if (!_program.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/FragmentTest.txt"))
@@ -124,5 +150,8 @@ void ProjectiveWidget::setupProgram()
 
     _program.link();
     _program.bind();
+    _vmpLocation = _program.uniformLocation("ViewModelProject");
+    if (_vmpLocation < 0)
+        qDebug() << "uniform location not found";
 }
 

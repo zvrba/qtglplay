@@ -1,0 +1,9 @@
+#version 330 core
+
+uniform mat4 ViewModelProject;
+layout (location=0) in vec3 Vertex;
+
+void main()
+{
+  gl_Position = ViewModelProject * vec4(Vertex, 1);
+}
