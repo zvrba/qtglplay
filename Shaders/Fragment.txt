@@ -7,5 +7,5 @@ layout (location=0) out vec4 color;
 void main()
 {
   //color = texture(tex, frag_uv);
-  color = vec4(frag_uv, 0, 1);
+  color = vec4(frag_uv, texture(tex, frag_uv).b, 1);
 }
