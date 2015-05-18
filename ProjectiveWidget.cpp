@@ -51,7 +51,8 @@ QVector3D BoysGenerator::bryant(complex z)
 
 ProjectiveWidget::ProjectiveWidget(QWidget*) : 
     _vbo(QOpenGLBuffer::VertexBuffer),
-    _program(this)
+    _program(this),
+    _tex(QOpenGLTexture::Target2D)
 {
 }
 
@@ -68,6 +69,7 @@ void ProjectiveWidget::initializeGL()
 
     loadProgram();
     setupGeometry();
+    setupTexture();
     resetXform();
     // resizeGL called also after initialization
 }
@@ -84,11 +86,13 @@ void ProjectiveWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     _program.setUniformValue("ViewModelProject", _xform);
     QOpenGLVertexArrayObject::Binder binder(&_vao);
-    //GLenum err = glGetError();
-    //glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
 
+#if 1
+    glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
+#else
     for (int i = 0; i < _triangleCount; ++i)
         glDrawArrays(GL_LINE_LOOP, 3*i, 3);
+#endif
 
     glFlush();
 }
@@ -161,6 +165,7 @@ void ProjectiveWidget::cleanup()
     makeCurrent();
     _vao.destroy();
     _vbo.destroy();
+    _tex.release();
     _program.release();
 }
 
@@ -179,8 +184,25 @@ void ProjectiveWidget::setupGeometry()
     _vbo.bind();
     _vbo.allocate(&shapeData[0], shapeData.size() * sizeof(float));
 
-    _program.setAttributeBuffer("Vertex", GL_FLOAT, 0, 3);
-    _program.enableAttributeArray("Vertex");
+    _program.setAttributeBuffer("vertex_position", GL_FLOAT, 0, 3);
+    _program.enableAttributeArray("vertex_position");
+
+    _program.setAttributeBuffer("vertex_uv", GL_FLOAT, _triangleCount*2*3*3*sizeof(float), 2);
+    _program.enableAttributeArray("vertex_uv");
+}
+
+void ProjectiveWidget::setupTexture()
+{
+    QImage img("Shaders/Texture.png", "PNG");
+    if (img.isNull()) {
+        qDebug() << "FAILED TO LOAD TEXTURE\n";
+        return;
+    }
+
+    _tex.setFormat(QOpenGLTexture::RGB8_UNorm);
+    _tex.setWrapMode(QOpenGLTexture::Repeat);
+    _tex.setData(img.mirrored(), QOpenGLTexture::DontGenerateMipMaps);
+    _tex.bind();
 }
 
 void ProjectiveWidget::loadProgram()
@@ -188,7 +210,7 @@ void ProjectiveWidget::loadProgram()
     if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/Perspective.txt"))
         qDebug() << "VERTEX SHADER LOG: " << _program.log();
 
-    if (!_program.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/FragmentTest.txt"))
+    if (!_program.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/Fragment.txt"))
         qDebug() << "FRAGMENT SHADER LOG: " << _program.log();
 
     _program.link();

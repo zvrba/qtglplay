@@ -9,6 +9,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLTexture>
 #include <QMatrix4x4>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
@@ -31,8 +32,9 @@ protected:
     void keyPressEvent(QKeyEvent*) override;
 
 private:
-    void setupGeometry();
     void loadProgram();
+    void setupGeometry();
+    void setupTexture();
     void setupXform();
     void resetXform();
     void cleanup();
@@ -48,6 +50,7 @@ private:
 
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _vbo;
+    QOpenGLTexture _tex;
     QOpenGLShaderProgram _program;
 };
 
