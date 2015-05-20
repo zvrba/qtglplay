@@ -52,7 +52,7 @@ QVector3D BoysGenerator::bryant(complex z)
 ProjectiveWidget::ProjectiveWidget(QWidget*) : 
     _vbo(QOpenGLBuffer::VertexBuffer),
     _program(this),
-    _tex(QOpenGLTexture::Target2D)
+    _tex(0)
 {
 }
 
@@ -63,9 +63,13 @@ ProjectiveWidget::~ProjectiveWidget()
 
 void ProjectiveWidget::initializeGL()
 {
-    connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ProjectiveWidget::cleanup);
-    initializeOpenGLFunctions();
-    glClearColor(0, 0, 0, 1);
+    QOpenGLContext *context = this->context();
+    connect(context, &QOpenGLContext::aboutToBeDestroyed, this, &ProjectiveWidget::cleanup);
+
+    G = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
+    G->initializeOpenGLFunctions();
+    G->glEnable(GL_TEXTURE_2D);
+    G->glClearColor(0, 0, 0, 1);
 
     loadProgram();
     setupGeometry();
@@ -83,23 +87,24 @@ void ProjectiveWidget::resetXform()
 
 void ProjectiveWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    _program.setUniformValue("ViewModelProject", _xform);
-    QOpenGLVertexArrayObject::Binder binder(&_vao);
+    G->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    G->glUniformMatrix4fv(_vmp_i, 1, GL_FALSE, _xform.data());
+    G->glBindVertexArray(_vao);
 
-#if 1
-    glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
+#if 0
+    G->glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
 #else
     for (int i = 0; i < _triangleCount; ++i)
-        glDrawArrays(GL_LINE_LOOP, 3*i, 3);
+        G->glDrawArrays(GL_LINE_LOOP, 3*i, 3);
 #endif
 
-    glFlush();
+    G->glFlush();
+    G->glBindVertexArray(0);
 }
 
 void ProjectiveWidget::resizeGL(int width, int height)
 {
-    glViewport(0, 0, width, height);
+    G->glViewport(0, 0, width, height);
     setupXform();
 }
 
@@ -163,9 +168,11 @@ void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
 void ProjectiveWidget::cleanup()
 {
     makeCurrent();
-    _vao.destroy();
-    _vbo.destroy();
-    _tex.release();
+    G->glBindVertexArray(0);
+    G->glDeleteVertexArrays(1, &_vao);
+    G->glDeleteBuffers(1, &_vbo);
+    G->glBindTexture(GL_TEXTURE_2D, 0);
+    delete _tex;
     _program.release();
 }
 
@@ -176,19 +183,20 @@ void ProjectiveWidget::setupGeometry()
     _vertexCount = bg.getVertexCount();
     _triangleCount = bg.getTriangleCount();
 
-    _vao.create();
-    QOpenGLVertexArrayObject::Binder binder(&_vao);
+    G->glGenVertexArrays(1, &_vao);
+    G->glBindVertexArray(_vao);
 
-    _vbo.create();
-    _vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _vbo.bind();
-    _vbo.allocate(&shapeData[0], shapeData.size() * sizeof(float));
+    G->glGenBuffers(1, &_vbo);
+    G->glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    G->glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(float), &shapeData[0], GL_STATIC_DRAW);
 
-    _program.setAttributeBuffer("vertex_position", GL_FLOAT, 0, 3);
-    _program.enableAttributeArray("vertex_position");
+    G->glVertexAttribPointer(_vertex_position_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    G->glEnableVertexAttribArray(_vertex_position_i);
 
-    _program.setAttributeBuffer("vertex_uv", GL_FLOAT, _triangleCount*2*3*3*sizeof(float), 2);
-    _program.enableAttributeArray("vertex_uv");
+    G->glVertexAttribPointer(_vertex_uv_i, 2, GL_FLOAT, GL_FALSE, 0, (void*)2); // TODO: USE _triangleCount*2*3*3*sizeof(float)
+    G->glEnableVertexAttribArray(_vertex_uv_i);
+
+    G->glBindVertexArray(0);
 }
 
 void ProjectiveWidget::setupTexture()
@@ -199,10 +207,10 @@ void ProjectiveWidget::setupTexture()
         return;
     }
 
-    _tex.setFormat(QOpenGLTexture::RGB8_UNorm);
-    _tex.setWrapMode(QOpenGLTexture::Repeat);
-    _tex.setData(img.mirrored(), QOpenGLTexture::DontGenerateMipMaps);
-    _tex.bind();
+    _tex = new QOpenGLTexture(img.mirrored(), QOpenGLTexture::DontGenerateMipMaps);
+    _tex->setMinificationFilter(QOpenGLTexture::Linear);
+    _tex->setMagnificationFilter(QOpenGLTexture::Linear);
+    _tex->bind();
 }
 
 void ProjectiveWidget::loadProgram()
@@ -215,4 +223,9 @@ void ProjectiveWidget::loadProgram()
 
     _program.link();
     _program.bind();
+
+    _vertex_position_i = _program.attributeLocation("vertex_position");
+    _vertex_uv_i = _program.attributeLocation("vertex_uv");
+    _vmp_i = _program.uniformLocation("ViewModelProject");
+    _tex_i = _program.uniformLocation("tex");
 }

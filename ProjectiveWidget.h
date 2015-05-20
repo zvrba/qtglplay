@@ -10,11 +10,12 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include <QOpenGLFunctions_3_3_core>
 #include <QMatrix4x4>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
-class ProjectiveWidget : public QOpenGLWidget, protected QOpenGLFunctions
+class ProjectiveWidget : public QOpenGLWidget
 {
     Q_OBJECT
 
@@ -48,9 +49,11 @@ private:
     int _znear;
     QMatrix4x4 _objectXform, _perspXform, _xform;
 
-    QOpenGLVertexArrayObject _vao;
-    QOpenGLBuffer _vbo;
-    QOpenGLTexture _tex;
+    // OpenGL stuff.
+    QOpenGLFunctions_3_3_Core *G;
+    QOpenGLTexture *_tex;
+    GLuint _vao, _vbo;
+    GLint _vertex_position_i, _vertex_uv_i, _vmp_i, _tex_i;
     QOpenGLShaderProgram _program;
 };
 
