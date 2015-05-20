@@ -136,8 +136,8 @@ void ProjectiveWidget::setupXform()
 
     {
         _perspXform.setToIdentity();
-        //_perspXform.frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
-        _perspXform.ortho(-0.2, 1.2, -0.2, 1.2, 0.1, 5);
+        _perspXform.frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
+        //_perspXform.ortho(-0.2, 1.2, -0.2, 1.2, 0.1, 5);
     }
 
     _xform = _perspXform * _objectXform;
@@ -195,8 +195,8 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
-    //BoysGenerator bg(32, 32);
-    QuadGenerator bg(2, 2);
+    BoysGenerator bg(32, 32);
+    //QuadGenerator bg(2, 2);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
     _triangleCount = bg.getTriangleCount();
