@@ -4,6 +4,22 @@
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
+class QuadGenerator : public SurfaceGenerator
+{
+protected:
+    virtual QVector2D UV(int u, int v) const override
+    {
+        return QVector2D((float)u / (getUSegmentCount()-1), (float)v / (getVSegmentCount()-1));
+    }
+    virtual QVector3D F(QVector2D uv) const override
+    {
+        return QVector3D(uv.x(), uv.y(), uv.x()+uv.y());
+    }
+public:
+    QuadGenerator(int uSegments, int vSegments) : SurfaceGenerator(uSegments, vSegments, false, false)
+    { }
+};
+
 class BoysGenerator : public SurfaceGenerator
 {
     using complex = std::complex<double>;
@@ -92,7 +108,7 @@ void ProjectiveWidget::paintGL()
     G->glBindTexture(GL_TEXTURE_2D, _tex);
     G->glUniform1i(_tex_i, 0);
 
-#if 1
+#if 0
     G->glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
 #else
     for (int i = 0; i < _triangleCount; ++i)
@@ -100,7 +116,6 @@ void ProjectiveWidget::paintGL()
 #endif
 
     G->glFlush();
-    G->glBindVertexArray(0);
 }
 
 void ProjectiveWidget::resizeGL(int width, int height)
@@ -121,7 +136,8 @@ void ProjectiveWidget::setupXform()
 
     {
         _perspXform.setToIdentity();
-        _perspXform.frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
+        //_perspXform.frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
+        _perspXform.ortho(-0.2, 1.2, -0.2, 1.2, 0.1, 5);
     }
 
     _xform = _perspXform * _objectXform;
@@ -179,7 +195,8 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
-    BoysGenerator bg(32, 32);
+    //BoysGenerator bg(32, 32);
+    QuadGenerator bg(2, 2);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
     _triangleCount = bg.getTriangleCount();

@@ -56,8 +56,8 @@ void SurfaceGenerator::generateUVVertex()
 
 void SurfaceGenerator::generateTrianglesAndUVs()
 {
-    for (int u = 0; u < _uSegments; ++u)
-    for (int v = 0; v < _vSegments; ++v)
+    for (int u = 0; u < _uSegments - 1 + _closeU; ++u)
+    for (int v = 0; v < _vSegments - 1 + _closeV; ++v)
     {
         halfQuadVertex(u, v, 0);
         halfQuadVertex(u, v, 1);
@@ -71,8 +71,8 @@ void SurfaceGenerator::generateNormals()
     for (auto i = 0; i < _uvNormal.size(); ++i)
         _uvNormal[i] /= (float)_divideCount[i];
 
-    for (int u = 0; u < _uSegments; ++u)
-    for (int v = 0; v < _vSegments; ++v)
+    for (int u = 0; u < _uSegments - 1 + _closeU; ++u)
+    for (int v = 0; v < _vSegments - 1 + _closeV; ++v)
     {
         halfQuadNormal(u, v, 0);
         halfQuadNormal(u, v, 1);
