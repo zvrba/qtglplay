@@ -195,7 +195,7 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
-    BoysGenerator bg(32, 32);
+    BoysGenerator bg(128, 128);
     //QuadGenerator bg(2, 2);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
