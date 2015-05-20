@@ -88,9 +88,19 @@ void SurfaceGenerator::halfQuadVertex(int u, int v, int h)
     QVector3D c[3] = { _uvVertex[i[0]], _uvVertex[i[1 + h]], _uvVertex[i[2 + h]] };
     QVector3D n = QVector3D::normal(c[0], c[1], c[2]);
     
-    _triangles.push_back(c[0]); _uvs.push_back(UV(u, v));
-    _triangles.push_back(c[1]); _uvs.push_back(UV(u1, !h ? v : v1));
-    _triangles.push_back(c[2]); _uvs.push_back(UV(!h ? u : u1, v));
+    _triangles.push_back(c[0]);
+    _triangles.push_back(c[1]);
+    _triangles.push_back(c[2]);
+
+    if (h == 0) {
+        _uvs.push_back(UV(u, v));
+        _uvs.push_back(UV(u1, v));
+        _uvs.push_back(UV(u1, v1));
+    } else {
+        _uvs.push_back(UV(u, v));
+        _uvs.push_back(UV(u1, v1));
+        _uvs.push_back(UV(u, v1));
+    }
 
     _uvNormal[i[0]] += n;   ++_divideCount[i[0]];
     _uvNormal[i[1+h]] += n; ++_divideCount[i[1+h]];
