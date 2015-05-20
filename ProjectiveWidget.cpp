@@ -96,7 +96,7 @@ void ProjectiveWidget::initializeGL()
 void ProjectiveWidget::resetXform()
 {
     _rx = _ry = _rz = 0;
-    _tz = 0;
+    _tz = -30;
     _znear = 1;
 }
 
@@ -108,7 +108,7 @@ void ProjectiveWidget::paintGL()
     G->glBindTexture(GL_TEXTURE_2D, _tex);
     G->glUniform1i(_tex_i, 0);
 
-#if 0
+#if 1
     G->glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
 #else
     for (int i = 0; i < _triangleCount; ++i)
@@ -213,8 +213,6 @@ void ProjectiveWidget::setupGeometry()
 
     G->glVertexAttribPointer(_vertex_uv_i, 2, GL_FLOAT, GL_FALSE, 0, (void*)(_triangleCount*2*3*3*sizeof(float)));
     G->glEnableVertexAttribArray(_vertex_uv_i);
-
-    G->glBindVertexArray(0);
 }
 
 void ProjectiveWidget::setupTexture()
@@ -231,8 +229,10 @@ void ProjectiveWidget::setupTexture()
     G->glActiveTexture(GL_TEXTURE0);
     G->glGenTextures(1, &_tex);
     G->glBindTexture(GL_TEXTURE_2D, _tex);
+    G->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     G->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, bits);
-    G->glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ProjectiveWidget::loadProgram()
