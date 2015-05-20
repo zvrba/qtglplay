@@ -224,15 +224,20 @@ void ProjectiveWidget::setupTexture()
     }
 
     auto bits = img.constBits();
+    auto width = img.width();
+    auto height = img.height();
     auto bpp = img.bitPlaneCount();
+    auto format = img.format();
+
 
     G->glActiveTexture(GL_TEXTURE0);
     G->glGenTextures(1, &_tex);
     G->glBindTexture(GL_TEXTURE_2D, _tex);
     G->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    G->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, bits);
+    G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // GRRR, img.format() is RGB32 with alpha forced to 0xFF
+    G->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bits);
 }
 
 void ProjectiveWidget::loadProgram()
