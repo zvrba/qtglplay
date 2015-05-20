@@ -51,8 +51,7 @@ QVector3D BoysGenerator::bryant(complex z)
 
 ProjectiveWidget::ProjectiveWidget(QWidget*) : 
     _vbo(QOpenGLBuffer::VertexBuffer),
-    _program(this),
-    _tex(0)
+    _program(this)
 {
 }
 
@@ -90,6 +89,8 @@ void ProjectiveWidget::paintGL()
     G->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     G->glUniformMatrix4fv(_vmp_i, 1, GL_FALSE, _xform.data());
     G->glBindVertexArray(_vao);
+    G->glBindTexture(GL_TEXTURE_2D, _tex);
+    G->glUniform1i(_tex_i, 0);
 
 #if 0
     G->glDrawArrays(GL_TRIANGLES, 0, _triangleCount*3);
@@ -172,7 +173,7 @@ void ProjectiveWidget::cleanup()
     G->glDeleteVertexArrays(1, &_vao);
     G->glDeleteBuffers(1, &_vbo);
     G->glBindTexture(GL_TEXTURE_2D, 0);
-    delete _tex;
+    G->glDeleteTextures(1, &_tex);
     _program.release();
 }
 
@@ -207,10 +208,13 @@ void ProjectiveWidget::setupTexture()
         return;
     }
 
-    _tex = new QOpenGLTexture(img.mirrored(), QOpenGLTexture::DontGenerateMipMaps);
-    _tex->setMinificationFilter(QOpenGLTexture::Linear);
-    _tex->setMagnificationFilter(QOpenGLTexture::Linear);
-    _tex->bind();
+    auto bits = img.constBits();
+    auto bpp = img.bitPlaneCount();
+
+    G->glGenTextures(1, &_tex);
+    G->glBindTexture(GL_TEXTURE_2D, _tex);
+    G->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, img.width(), img.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, bits);
+    G->glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ProjectiveWidget::loadProgram()
