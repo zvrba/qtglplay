@@ -165,7 +165,15 @@ void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
     case 'N': target = &_znear; delta = 1; break;
     case ' ':
         qDebug() << "R: " << _rx << " " << _ry << " " << _rz;
-        qDebug() << "T: " << _tz;
+        qDebug() << "T: " << _tz << " N: " << _znear;
+        return;
+    case '!':
+        qDebug() << "COMPILING";
+        makeCurrent();
+        _program.release();
+        loadProgram();
+        doneCurrent();
+        qDebug() << "COMPILE FINISHED";
         break;
     default:
         qDebug() << "UNHANDLED KEY: " << ev->text();
@@ -178,8 +186,9 @@ void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
             delta = -delta;
         *target += delta;
         setupXform();
-        update();
     }
+
+    update();
 }
 
 void ProjectiveWidget::cleanup()
@@ -242,6 +251,8 @@ void ProjectiveWidget::setupTexture()
 
 void ProjectiveWidget::loadProgram()
 {
+    _program.removeAllShaders();
+
     if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/Perspective.txt"))
         qDebug() << "VERTEX SHADER LOG: " << _program.log();
 
