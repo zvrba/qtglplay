@@ -84,6 +84,8 @@ void ProjectiveWidget::initializeGL()
     G = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
     G->initializeOpenGLFunctions();
     G->glEnable(GL_TEXTURE_2D);
+    G->glEnable(GL_BLEND);
+    G->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     G->glClearColor(0, 0, 0, 1);
 
     loadProgram();
@@ -220,6 +222,9 @@ void ProjectiveWidget::setupGeometry()
     G->glVertexAttribPointer(_vertex_position_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     G->glEnableVertexAttribArray(_vertex_position_i);
 
+    G->glVertexAttribPointer(_vertex_normal_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)(_triangleCount*3*3*sizeof(float)));
+    G->glEnableVertexAttribArray(_vertex_normal_i);
+
     G->glVertexAttribPointer(_vertex_uv_i, 2, GL_FLOAT, GL_FALSE, 0, (void*)(_triangleCount*2*3*3*sizeof(float)));
     G->glEnableVertexAttribArray(_vertex_uv_i);
 }
@@ -263,6 +268,7 @@ void ProjectiveWidget::loadProgram()
     _program.bind();
 
     _vertex_position_i = _program.attributeLocation("vertex_position");
+    _vertex_normal_i = _program.attributeLocation("vertex_normal");
     _vertex_uv_i = _program.attributeLocation("vertex_uv");
     _vmp_i = _program.uniformLocation("ViewModelProject");
     _tex_i = _program.uniformLocation("tex");

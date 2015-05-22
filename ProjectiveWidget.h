@@ -52,7 +52,7 @@ private:
     // OpenGL stuff.
     QOpenGLFunctions_3_3_Core *G;
     GLuint _vao, _vbo, _tex;
-    GLint _vertex_position_i, _vertex_uv_i, _vmp_i, _tex_i;
+    GLint _vertex_position_i, _vertex_normal_i, _vertex_uv_i, _vmp_i, _tex_i;
     QOpenGLShaderProgram _program;
 };
 
