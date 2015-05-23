@@ -20,7 +20,7 @@ public:
     { }
 };
 
-class BoysGenerator : public SurfaceGenerator
+class ProjectiveGenerator : public SurfaceGenerator
 {
     using complex = std::complex<double>;
 
@@ -34,34 +34,26 @@ class BoysGenerator : public SurfaceGenerator
 protected:
     virtual QVector2D UV(int u, int v) const override
     {
-        return QVector2D((float)u / getUSegmentCount(), (float)v / getVSegmentCount()); // TODO: should not be linear.
+        float uu = (float)u / (getUSegmentCount()-1);
+        float vv = (float)v / (getVSegmentCount()-1);
+        return QVector2D(uu, vv);
     }
 
     virtual QVector3D F(QVector2D uv) const override
     {
-        return bryant(fromPolar(uv.x(), uv.y() * 2 * 3.141593f));
+        static const float pi = 3.1416;
+        double u = uv.x() * 2*pi, v = uv.y() * pi/2;
+        double cosu = cos(u), cosv = cos(v), sinu = sin(u), sinv = sin(v), sin2v = sin(2*v);
+        double x = cosu * sin2v;
+        double y = sinu * sin2v;
+        double z = cosv*cosv - cosu*cosu * sinv*sinv;
+        return QVector3D(x, y, z);
     }
 
 public:
-    BoysGenerator(int uSegments, int vSegments) : SurfaceGenerator(uSegments, vSegments, true, true)
+    ProjectiveGenerator(int uSegments, int vSegments) : SurfaceGenerator(uSegments, vSegments, true, true)
     { }
 };
-
-QVector3D BoysGenerator::bryant(complex z)
-{
-    // TODO! FIX! This will be much more precise in polar coordinates!
-    complex num1 = z * (complex(1) - pow(z, 4));
-    complex num2 = z * (complex(1) + pow(z, 4));
-    complex num3 = complex(1) + pow(z, 6);
-    complex den = pow(z, 6) + complex(sqrt(5)) * pow(z, 3) - complex(1);
-
-    double g1 = -1.5 * (num1 / den).imag();
-    double g2 = -1.5 * (num2 / den).real();
-    double g3 = (num3 / den).imag() - 0.5;
-    double g = g1*g1 + g2*g2 + g3*g3;
-
-    return QVector3D(g1 / g, g2 / g, g3 / g);
-}
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -84,8 +76,8 @@ void ProjectiveWidget::initializeGL()
     G = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
     G->initializeOpenGLFunctions();
     G->glEnable(GL_TEXTURE_2D);
-    G->glEnable(GL_BLEND);
-    G->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    //G->glEnable(GL_BLEND);
+    G->glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
     G->glClearColor(0, 0, 0, 1);
 
     loadProgram();
@@ -206,7 +198,7 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
-    BoysGenerator bg(128, 128);
+    ProjectiveGenerator bg(128, 128);
     //QuadGenerator bg(2, 2);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
