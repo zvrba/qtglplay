@@ -60,8 +60,8 @@ void ProjectiveWidget::initializeGL()
     G = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
     G->initializeOpenGLFunctions();
     G->glEnable(GL_TEXTURE_2D);
-    //G->glEnable(GL_BLEND);
-    G->glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
+    G->glEnable(GL_BLEND);
+    G->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     G->glClearColor(0, 0, 0, 1);
 
     loadProgram();
@@ -136,9 +136,9 @@ void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
 
     switch (ev->text().toUpper().at(0).toLatin1())
     {
-    case 'X': target = &_rx; delta = 12; break;
-    case 'Y': target = &_ry; delta = 12; break;
-    case 'Z': target = &_rz; delta = 12; break;
+    case 'X': target = &_rx; delta = 15; break;
+    case 'Y': target = &_ry; delta = 15; break;
+    case 'Z': target = &_rz; delta = 15; break;
     case 'T': target = &_tz; delta = 1; break;
     case 'N': target = &_znear; delta = 1; break;
     case ' ':

@@ -40,17 +40,15 @@ private:
     void resetXform();
     void cleanup();
 
-    static float radians(int angle) { return (float)(angle % 360) * 3.141593f / 180.0f; }
-
     // Object data & state. We have only a single object.
     int _vertexCount, _triangleCount;
     int _rx, _ry, _rz;  // Axis rotations in degrees.
     int _tz;            // Translation along z, multiplied by 10.
     int _znear;
-    QMatrix4x4 _objectXform, _perspXform, _xform;
 
     // OpenGL stuff.
     QOpenGLFunctions_3_3_Core *G;
+    QMatrix4x4 _objectXform, _perspXform, _xform;
     GLuint _vao, _vbo, _tex;
     GLint _vertex_position_i, _vertex_normal_i, _vertex_uv_i, _vmp_i, _tex_i;
     QOpenGLShaderProgram _program;
