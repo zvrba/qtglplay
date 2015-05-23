@@ -262,6 +262,6 @@ void ProjectiveWidget::loadProgram()
     _vertex_position_i = _program.attributeLocation("vertex_position");
     _vertex_normal_i = _program.attributeLocation("vertex_normal");
     _vertex_uv_i = _program.attributeLocation("vertex_uv");
-    _vmp_i = _program.uniformLocation("ViewModelProject");
+    _vmp_i = _program.uniformLocation("vmp");
     _tex_i = _program.uniformLocation("tex");
 }
