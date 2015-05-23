@@ -1,11 +1,15 @@
 #version 330 core
 
 uniform sampler2D tex;
+
+in vec3 frag_normal;
 in vec2 frag_uv;
+
 layout (location=0) out vec4 color;
 
 void main()
 {
   vec4 tmp = texture(tex, 8*frag_uv.yx);
-  color = tmp; //vec4(tmp.r, tmp.g, 0.5, 1);
+  color = tmp;
+  color.a = 0;
 }

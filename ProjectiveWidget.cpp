@@ -4,22 +4,6 @@
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
-class QuadGenerator : public SurfaceGenerator
-{
-protected:
-    virtual QVector2D UV(int u, int v) const override
-    {
-        return QVector2D((float)u / (getUSegmentCount()-1), (float)v / (getVSegmentCount()-1));
-    }
-    virtual QVector3D F(QVector2D uv) const override
-    {
-        return QVector3D(uv.x(), uv.y(), uv.x()+uv.y());
-    }
-public:
-    QuadGenerator(int uSegments, int vSegments) : SurfaceGenerator(uSegments, vSegments, false, false)
-    { }
-};
-
 class ProjectiveGenerator : public SurfaceGenerator
 {
     using complex = std::complex<double>;
@@ -259,9 +243,24 @@ void ProjectiveWidget::loadProgram()
     _program.link();
     _program.bind();
 
-    _vertex_position_i = _program.attributeLocation("vertex_position");
-    _vertex_normal_i = _program.attributeLocation("vertex_normal");
-    _vertex_uv_i = _program.attributeLocation("vertex_uv");
-    _vmp_i = _program.uniformLocation("vmp");
-    _tex_i = _program.uniformLocation("tex");
+    qDebug() << "PROGRAM LOG: " << _program.log();
+    GLuint p = _program.programId();
+
+    // WTF? glGetAttribLocation will return -1 for vertex_normal unless it is somehow used in the program.
+    // Hardcode this for now.
+#if 0
+    _vertex_position_i = G->glGetAttribLocation(p, "vertex_position");
+    _vertex_normal_i = G->glGetAttribLocation(p, "vertex_normal");
+    _vertex_uv_i = G->glGetAttribLocation(p, "vertex_uv");
+#else
+    if (G->glGetAttribLocation(p, "vertex_normal") < 0)
+        qDebug() << "VERTEX NORMAL OPTIMIZED OUT";
+
+    _vertex_position_i = 0;
+    _vertex_normal_i = 1;
+    _vertex_uv_i = 2;
+#endif
+
+    _vmp_i = G->glGetUniformLocation(p, "vmp");
+    _tex_i = G->glGetUniformLocation(p, "tex");
 }
