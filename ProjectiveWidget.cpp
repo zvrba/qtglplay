@@ -182,7 +182,7 @@ void ProjectiveWidget::cleanup()
 
 void ProjectiveWidget::setupGeometry()
 {
-    ProjectiveGenerator bg(128, 128);
+    ProjectiveGenerator bg(256, 256);
     //QuadGenerator bg(2, 2);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
@@ -207,7 +207,7 @@ void ProjectiveWidget::setupGeometry()
 
 void ProjectiveWidget::setupTexture()
 {
-    QImage img("Shaders/Texture.png", "PNG");
+    QImage img("Shaders/TextureBW.png", "PNG");
     if (img.isNull()) {
         qDebug() << "FAILED TO LOAD TEXTURE\n";
         return;
