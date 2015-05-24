@@ -1,6 +1,4 @@
 #pragma once
-#ifndef SURFACEGENERATOR_H
-#define SURFACEGENERATOR_H
 
 #include <vector>
 #include <QVector2D>
@@ -50,4 +48,3 @@ public:
     int getTriangleCount() const { return _vertexCount / 3; }   // vertices are duplicated ATM
 };
 
-#endif

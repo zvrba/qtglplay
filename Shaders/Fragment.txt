@@ -16,7 +16,12 @@ void main()
   color = tmp * abs(frag_normal.y);
   color.a = 1;//1-(1+frag_normal.z)/2;
 */
-  vec4 ncolor = vec4((vec3(1) + frag_normal)/2, 1);
+  vec4 ncolor;
+
+  if (frag_normal.z >= 0) ncolor = vec4(0, 0, frag_normal.z, 1);
+  else ncolor = vec4(0, -frag_normal.z, 0, 1);
+
   vec4 tcolor = texture(tex, 8*frag_uv);
-  color = mix(ncolor, tcolor, 0.3);
+  color = mix(ncolor, tcolor, 0.4);
+  //color.a = 0.5;
 }

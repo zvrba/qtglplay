@@ -4,6 +4,7 @@
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
+// TODO! Move geometry generation into the vertex shader!
 class ProjectiveGenerator : public SurfaceGenerator
 {
     using complex = std::complex<double>;
@@ -25,7 +26,7 @@ protected:
 
     virtual QVector3D F(QVector2D uv) const override
     {
-        static const float pi = 3.1416;
+        static const float pi = 3.1416f;
         double u = uv.x() * 2*pi, v = uv.y() * pi/2;
         double cosu = cos(u), cosv = cos(v), sinu = sin(u), sinv = sin(v), sin2v = sin(2*v);
         double x = cosu * sin2v;
@@ -42,7 +43,6 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 
 ProjectiveWidget::ProjectiveWidget(QWidget*) : 
-    _vbo(QOpenGLBuffer::VertexBuffer),
     _program(this)
 {
 }
@@ -52,6 +52,49 @@ ProjectiveWidget::~ProjectiveWidget()
     cleanup();
 }
 
+void ProjectiveWidget::setSegmentCount(int count)
+{
+    if (count < 8) count = 8;
+    _segmentCount = count;
+    makeCurrent();
+    setupGeometry();
+    doneCurrent();
+    update();
+}
+
+void ProjectiveWidget::setCameraU(int u)
+{
+    if (u < 0 || u >= _segmentCount) u = 0;
+    _cameraU = u;
+    setupCamera();
+    update();
+}
+
+void ProjectiveWidget::setCameraV(int v)
+{
+    if (v < 0 || v >= _segmentCount) v = 0;
+    _cameraV = v;
+    setupCamera();
+    update();
+}
+
+void ProjectiveWidget::setCameraHeight(float height)
+{
+    if (height < 0) height = 0;
+    _cameraHeight = height;
+    setupCamera();
+    update();
+}
+
+void ProjectiveWidget::compileShaders()
+{
+    makeCurrent();
+    _program.release();
+    loadProgram();
+    doneCurrent();
+    update();
+}
+
 void ProjectiveWidget::initializeGL()
 {
     QOpenGLContext *context = this->context();
@@ -59,23 +102,35 @@ void ProjectiveWidget::initializeGL()
 
     G = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
     G->initializeOpenGLFunctions();
+
     G->glEnable(GL_TEXTURE_2D);
     G->glEnable(GL_BLEND);
     G->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     G->glClearColor(0, 0, 0, 1);
 
+    G->glGenVertexArrays(1, &_vao);
+    G->glGenBuffers(1, &_vbo);
+    G->glGenTextures(1, &_tex);
+
+    _segmentCount = 128;
+    _cameraU = _cameraV = 0;
+    _cameraHeight = 0;
+
     loadProgram();
     setupGeometry();
     setupTexture();
-    resetXform();
-    // resizeGL called also after initialization
 }
 
-void ProjectiveWidget::resetXform()
+void ProjectiveWidget::cleanup()
 {
-    _rx = _ry = _rz = 0;
-    _tz = -30;
-    _znear = 1;
+    makeCurrent();
+    G->glBindVertexArray(0);
+    G->glDeleteVertexArrays(1, &_vao);
+    G->glDeleteBuffers(1, &_vbo);
+    G->glBindTexture(GL_TEXTURE_2D, 0);
+    G->glDeleteTextures(1, &_tex);
+    _program.release();
+    doneCurrent();
 }
 
 void ProjectiveWidget::paintGL()
@@ -99,99 +154,24 @@ void ProjectiveWidget::paintGL()
 void ProjectiveWidget::resizeGL(int width, int height)
 {
     G->glViewport(0, 0, width, height);
-    setupXform();
+    setupCamera();
 }
 
-void ProjectiveWidget::setupXform()
+void ProjectiveWidget::setupCamera()
 {
-    {
-        _objectXform.setToIdentity();
-        _objectXform.translate(0, 0, _tz / 10.0f);
-        _objectXform.rotate(_rx, 1, 0, 0);
-        _objectXform.rotate(_ry, 0, 1, 0);
-        _objectXform.rotate(_rz, 0, 0, 1);
-    }
 
-    {
-        _perspXform.setToIdentity();
-        _perspXform.frustum(-1.0f, 1.0f, -1.0f, 1.0f, _znear / 10.0f, 100.0f);
-        //_perspXform.ortho(-0.2, 1.2, -0.2, 1.2, 0.1, 5);
-    }
-
-    _xform = _perspXform * _objectXform;
-}
-
-// lower-case: lower; upper-case: higher value
-// xX,yY,zZ: rotations around these axes
-// tT: translation along Z axis
-// nN: near plane
-// space: resets all transforms to defaults
-void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
-{
-    int *target = nullptr;
-    int delta = 0;
-
-    if (ev->text().isEmpty())   // Happens for modifiers (shift, etc)
-        return;
-
-    switch (ev->text().toUpper().at(0).toLatin1())
-    {
-    case 'X': target = &_rx; delta = 15; break;
-    case 'Y': target = &_ry; delta = 15; break;
-    case 'Z': target = &_rz; delta = 15; break;
-    case 'T': target = &_tz; delta = 1; break;
-    case 'N': target = &_znear; delta = 1; break;
-    case ' ':
-        qDebug() << "R: " << _rx << " " << _ry << " " << _rz;
-        qDebug() << "T: " << _tz << " N: " << _znear;
-        return;
-    case '!':
-        qDebug() << "COMPILING";
-        makeCurrent();
-        _program.release();
-        loadProgram();
-        doneCurrent();
-        qDebug() << "COMPILE FINISHED";
-        break;
-    default:
-        qDebug() << "UNHANDLED KEY: " << ev->text();
-        return;
-    }
-    
-    if (target)
-    {
-        if (ev->text() != ev->text().toUpper())
-            delta = -delta;
-        *target += delta;
-        setupXform();
-    }
-
-    update();
-}
-
-void ProjectiveWidget::cleanup()
-{
-    makeCurrent();
-    G->glBindVertexArray(0);
-    G->glDeleteVertexArrays(1, &_vao);
-    G->glDeleteBuffers(1, &_vbo);
-    G->glBindTexture(GL_TEXTURE_2D, 0);
-    G->glDeleteTextures(1, &_tex);
-    _program.release();
+    _xform = _cameraXform;
 }
 
 void ProjectiveWidget::setupGeometry()
 {
     ProjectiveGenerator bg(256, 256);
-    //QuadGenerator bg(2, 2);
     auto shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
     _triangleCount = bg.getTriangleCount();
 
-    G->glGenVertexArrays(1, &_vao);
     G->glBindVertexArray(_vao);
 
-    G->glGenBuffers(1, &_vbo);
     G->glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     G->glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(float), &shapeData[0], GL_STATIC_DRAW);
 
@@ -216,12 +196,8 @@ void ProjectiveWidget::setupTexture()
     auto bits = img.constBits();
     auto width = img.width();
     auto height = img.height();
-    auto bpp = img.bitPlaneCount();
-    auto format = img.format();
-
 
     G->glActiveTexture(GL_TEXTURE0);
-    G->glGenTextures(1, &_tex);
     G->glBindTexture(GL_TEXTURE_2D, _tex);
     G->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     G->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -232,18 +208,24 @@ void ProjectiveWidget::setupTexture()
 
 void ProjectiveWidget::loadProgram()
 {
+    QString compileMessages;
+
     _program.removeAllShaders();
 
+    compileMessages = "VERTEX SHADER LOG:\n";
     if (!_program.addShaderFromSourceFile(QOpenGLShader::Vertex, "Shaders/Perspective.txt"))
-        qDebug() << "VERTEX SHADER LOG: " << _program.log();
+        compileMessages += _program.log() + "\n";
 
+    compileMessages += "FRAGMENT SHADER LOG:\n";
     if (!_program.addShaderFromSourceFile(QOpenGLShader::Fragment, "Shaders/Fragment.txt"))
-        qDebug() << "FRAGMENT SHADER LOG: " << _program.log();
+        compileMessages += _program.log() + "\n";
 
-    _program.link();
+    compileMessages += "LINK LOG:\n";
+    if (!_program.link())
+        compileMessages += _program.log() + "\n";
+    
     _program.bind();
 
-    qDebug() << "PROGRAM LOG: " << _program.log();
     GLuint p = _program.programId();
 
     // WTF? glGetAttribLocation will return -1 for vertex_normal unless it is somehow used in the program.
@@ -254,7 +236,7 @@ void ProjectiveWidget::loadProgram()
     _vertex_uv_i = G->glGetAttribLocation(p, "vertex_uv");
 #else
     if (G->glGetAttribLocation(p, "vertex_normal") < 0)
-        qDebug() << "VERTEX NORMAL OPTIMIZED OUT";
+      compileMessages += "VERTEX NORMAL OPTIMIZED OUT\n";
 
     _vertex_position_i = 0;
     _vertex_normal_i = 1;
@@ -263,4 +245,6 @@ void ProjectiveWidget::loadProgram()
 
     _vmp_i = G->glGetUniformLocation(p, "vmp");
     _tex_i = G->glGetUniformLocation(p, "tex");
+
+    emit compilationDone(compileMessages);
 }

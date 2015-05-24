@@ -1,8 +1,4 @@
-// The very first example from the red book, adapted to QT.
-
 #pragma once
-#ifndef PROJECTIVE_WIDGET_H
-#define PROJECTIVE_WIDGET_H
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -26,32 +22,40 @@ public:
     QSize minimumSizeHint() const override { return QSize(320, 200); }
     QSize sizeHint() const override { return QSize(800, 600); }
 
+public slots:
+    void setSegmentCount(int count);
+    void setCameraU(int u);
+    void setCameraV(int v);
+    void setCameraHeight(float height);
+    void compileShaders();
+    void cleanup();
+
+signals:
+    void compilationDone(const QString &msg);
+
 protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
-    void keyPressEvent(QKeyEvent*) override;
 
 private:
     void loadProgram();
     void setupGeometry();
     void setupTexture();
-    void setupXform();
-    void resetXform();
-    void cleanup();
+    void setupCamera();
 
-    // Object data & state. We have only a single object.
-    int _vertexCount, _triangleCount;
-    int _rx, _ry, _rz;  // Axis rotations in degrees.
-    int _tz;            // Translation along z, multiplied by 10.
-    int _znear;
+    // Camera position & orientation.
+    int _segmentCount;
+    int _cameraU, _cameraV;
+    float _cameraHeight;
 
     // OpenGL stuff.
+    int _vertexCount, _triangleCount;
+    QMatrix4x4 _cameraXform, _xform;
+
     QOpenGLFunctions_3_3_Core *G;
-    QMatrix4x4 _objectXform, _perspXform, _xform;
     GLuint _vao, _vbo, _tex;
     GLint _vertex_position_i, _vertex_normal_i, _vertex_uv_i, _vmp_i, _tex_i;
     QOpenGLShaderProgram _program;
 };
 
-#endif

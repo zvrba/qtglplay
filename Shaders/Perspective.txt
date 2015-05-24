@@ -11,7 +11,10 @@ out vec2 frag_uv;
 
 void main()
 {
-  gl_Position = vmp * vec4(vertex_position, 1);
+  vec3 vp = vertex_position;
+  vp.y /= 2;
+  
+  gl_Position = vmp * vec4(vp, 1);
   frag_normal = vertex_normal;
   frag_uv = vertex_uv;
 }

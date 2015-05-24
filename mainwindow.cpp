@@ -40,11 +40,11 @@
 
 #include <QMessageBox>
 #include "mainwindow.h"
-#include "ProjectiveWidget.h"
+#include "window.h"
 
 MainWindow::MainWindow()
 {
     Q_ASSERT(!centralWidget());
-    setCentralWidget(new ProjectiveWidget(this));
+    setCentralWidget(new Window(this));
     centralWidget()->setFocus();    // Keyboard events!
 }
