@@ -78,10 +78,10 @@ void ProjectiveWidget::setCameraV(int v)
     update();
 }
 
-void ProjectiveWidget::setCameraHeight(float height)
+void ProjectiveWidget::setCameraHeight(int height)
 {
     if (height < 0) height = 0;
-    _cameraHeight = height;
+    _cameraHeight = height / 16.0f;
     setupCamera();
     update();
 }
@@ -159,21 +159,27 @@ void ProjectiveWidget::resizeGL(int width, int height)
 
 void ProjectiveWidget::setupCamera()
 {
+    // 6 3-component vertices per UV pair.
+    int i = 6 * _cameraU * _segmentCount + _cameraV;
+    QVector3D eye(_shapeData[i], _shapeData[i+1], _shapeData[i+2]);
+
+    _cameraXform.setToIdentity();
+    //_cameraXform.lookAt();
 
     _xform = _cameraXform;
 }
 
 void ProjectiveWidget::setupGeometry()
 {
-    ProjectiveGenerator bg(256, 256);
-    auto shapeData = bg.generate();
+    ProjectiveGenerator bg(_segmentCount, _segmentCount);
+    _shapeData = bg.generate();
     _vertexCount = bg.getVertexCount();
     _triangleCount = bg.getTriangleCount();
 
     G->glBindVertexArray(_vao);
 
     G->glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    G->glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(float), &shapeData[0], GL_STATIC_DRAW);
+    G->glBufferData(GL_ARRAY_BUFFER, _shapeData.size() * sizeof(float), &_shapeData[0], GL_STATIC_DRAW);
 
     G->glVertexAttribPointer(_vertex_position_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     G->glEnableVertexAttribArray(_vertex_position_i);

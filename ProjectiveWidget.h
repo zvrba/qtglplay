@@ -26,7 +26,7 @@ public slots:
     void setSegmentCount(int count);
     void setCameraU(int u);
     void setCameraV(int v);
-    void setCameraHeight(float height);
+    void setCameraHeight(int height);
     void compileShaders();
     void cleanup();
 
@@ -50,6 +50,7 @@ private:
     float _cameraHeight;
 
     // OpenGL stuff.
+    std::vector<float> _shapeData;
     int _vertexCount, _triangleCount;
     QMatrix4x4 _cameraXform, _xform;
 

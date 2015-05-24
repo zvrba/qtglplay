@@ -20,8 +20,8 @@ class SurfaceGenerator
     std::vector<float> _buffer;
     int _vertexCount;
 
-
     int VI(int u, int v) const { return u * _vSegments + v; }
+    
     void generateUVVertex();
     void generateTrianglesAndUVs();
     void generateNormals();

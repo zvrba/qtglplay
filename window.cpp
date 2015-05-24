@@ -16,8 +16,13 @@ Window::Window(QWidget *parent) : QWidget(parent)
     _projectiveWidget = new ProjectiveWidget;
 
     _uSlider = createSlider(0, _segmentCount);
+    connect(_uSlider, SIGNAL(valueChanged(int)), _projectiveWidget, SLOT(setCameraU(int)));
+
     _vSlider = createSlider(0, _segmentCount);
-    _hSlider = createSlider(0, 16);
+    connect(_vSlider, SIGNAL(valueChanged(int)), _projectiveWidget, SLOT(setCameraV(int)));
+
+    _hSlider = createSlider(0, 32);
+    connect(_hSlider, SIGNAL(valueChanged(int)), _projectiveWidget, SLOT(setCameraHeight(int)));
 
     _fov = new QLineEdit("1");
     _fov->setValidator(new QDoubleValidator(0.1, 10, 2));
@@ -35,6 +40,7 @@ Window::Window(QWidget *parent) : QWidget(parent)
 
     _compileButton = new QPushButton("Compile shaders");
     _compileLog = new QTextEdit("(compile log)");
+    _compileLog->setReadOnly(true);
 
     QVBoxLayout *settingsLayout = new QVBoxLayout;
     settingsLayout->addLayout(formLayout);
