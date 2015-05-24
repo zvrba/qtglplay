@@ -8,6 +8,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLFunctions_3_3_core>
 #include <QMatrix4x4>
+#include "SurfaceGenerator.h"
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -50,12 +51,12 @@ private:
     float _cameraHeight;
 
     // OpenGL stuff.
-    std::vector<float> _shapeData;
-    int _vertexCount, _triangleCount;
+    ProjectiveGenerator _shapeData;
+    int _triangleCount;
     QMatrix4x4 _cameraXform, _xform;
 
     QOpenGLFunctions_3_3_Core *G;
-    GLuint _vao, _vbo, _tex;
+    GLuint _vao, _vbo[3], _tex;
     GLint _vertex_position_i, _vertex_normal_i, _vertex_uv_i, _vmp_i, _tex_i;
     QOpenGLShaderProgram _program;
 };

@@ -1,46 +1,7 @@
-#include <complex>
 #include <QKeyEvent>
 #include <QVector3D>
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
-
-// TODO! Move geometry generation into the vertex shader!
-class ProjectiveGenerator : public SurfaceGenerator
-{
-    using complex = std::complex<double>;
-
-    static complex fromPolar(double r, double phi)
-    {
-        return complex(r*cos(phi), r*sin(phi));
-    }
-
-    static QVector3D bryant(complex z);
-
-protected:
-    virtual QVector2D UV(int u, int v) const override
-    {
-        float uu = (float)u / (getUSegmentCount()-1);
-        float vv = (float)v / (getVSegmentCount()-1);
-        return QVector2D(uu, vv);
-    }
-
-    virtual QVector3D F(QVector2D uv) const override
-    {
-        static const float pi = 3.1416f;
-        double u = uv.x() * 2*pi, v = uv.y() * pi/2;
-        double cosu = cos(u), cosv = cos(v), sinu = sin(u), sinv = sin(v), sin2v = sin(2*v);
-        double x = cosu * sin2v;
-        double y = sinu * sin2v;
-        double z = cosv*cosv - cosu*cosu * sinv*sinv;
-        return QVector3D(x, y, z);
-    }
-
-public:
-    ProjectiveGenerator(int uSegments, int vSegments) : SurfaceGenerator(uSegments, vSegments, true, true)
-    { }
-};
-
-/////////////////////////////////////////////////////////////////////////////
 
 ProjectiveWidget::ProjectiveWidget(QWidget*) : 
     _program(this)
@@ -109,7 +70,7 @@ void ProjectiveWidget::initializeGL()
     G->glClearColor(0, 0, 0, 1);
 
     G->glGenVertexArrays(1, &_vao);
-    G->glGenBuffers(1, &_vbo);
+    G->glGenBuffers(3, _vbo);
     G->glGenTextures(1, &_tex);
 
     _segmentCount = 128;
@@ -124,10 +85,8 @@ void ProjectiveWidget::initializeGL()
 void ProjectiveWidget::cleanup()
 {
     makeCurrent();
-    G->glBindVertexArray(0);
     G->glDeleteVertexArrays(1, &_vao);
-    G->glDeleteBuffers(1, &_vbo);
-    G->glBindTexture(GL_TEXTURE_2D, 0);
+    G->glDeleteBuffers(3, _vbo);
     G->glDeleteTextures(1, &_tex);
     _program.release();
     doneCurrent();
@@ -137,6 +96,7 @@ void ProjectiveWidget::paintGL()
 {
     G->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     G->glUniformMatrix4fv(_vmp_i, 1, GL_FALSE, _xform.data());
+    
     G->glBindVertexArray(_vao);
     G->glBindTexture(GL_TEXTURE_2D, _tex);
     G->glUniform1i(_tex_i, 0);
@@ -148,6 +108,7 @@ void ProjectiveWidget::paintGL()
         G->glDrawArrays(GL_LINE_LOOP, 3*i, 3);
 #endif
 
+    G->glBindVertexArray(0);
     G->glFlush();
 }
 
@@ -159,10 +120,11 @@ void ProjectiveWidget::resizeGL(int width, int height)
 
 void ProjectiveWidget::setupCamera()
 {
+    /*
     // 6 3-component vertices per UV pair.
     int i = 6 * _cameraU * _segmentCount + _cameraV;
     QVector3D eye(_shapeData[i], _shapeData[i+1], _shapeData[i+2]);
-
+    */
     _cameraXform.setToIdentity();
     //_cameraXform.lookAt();
 
@@ -171,24 +133,30 @@ void ProjectiveWidget::setupCamera()
 
 void ProjectiveWidget::setupGeometry()
 {
-    ProjectiveGenerator bg(_segmentCount, _segmentCount);
-    _shapeData = bg.generate();
-    _vertexCount = bg.getVertexCount();
-    _triangleCount = bg.getTriangleCount();
+    _shapeData.generate(_segmentCount, _segmentCount, true, true);
 
     G->glBindVertexArray(_vao);
 
-    G->glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    G->glBufferData(GL_ARRAY_BUFFER, _shapeData.size() * sizeof(float), &_shapeData[0], GL_STATIC_DRAW);
-
+    auto triangles = _shapeData.getTriangles();
+    G->glBindBuffer(GL_ARRAY_BUFFER, _vbo[0]);
+    G->glBufferData(GL_ARRAY_BUFFER, triangles.size() * sizeof(QVector3D), &triangles[0], GL_STATIC_DRAW);
     G->glVertexAttribPointer(_vertex_position_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     G->glEnableVertexAttribArray(_vertex_position_i);
+    _triangleCount = triangles.size() / 3;
 
-    G->glVertexAttribPointer(_vertex_normal_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)(_triangleCount*3*3*sizeof(float)));
+    auto normals = _shapeData.getNormals();
+    G->glBindBuffer(GL_ARRAY_BUFFER, _vbo[1]);
+    G->glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(QVector3D), &normals[0], GL_STATIC_DRAW);
+    G->glVertexAttribPointer(_vertex_normal_i, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     G->glEnableVertexAttribArray(_vertex_normal_i);
 
-    G->glVertexAttribPointer(_vertex_uv_i, 2, GL_FLOAT, GL_FALSE, 0, (void*)(_triangleCount*2*3*3*sizeof(float)));
+    auto uvs = _shapeData.getUVs();
+    G->glBindBuffer(GL_ARRAY_BUFFER, _vbo[2]);
+    G->glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(QVector2D), &uvs[0], GL_STATIC_DRAW);
+    G->glVertexAttribPointer(_vertex_uv_i, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     G->glEnableVertexAttribArray(_vertex_uv_i);
+
+    G->glBindVertexArray(0);
 }
 
 void ProjectiveWidget::setupTexture()

@@ -1,18 +1,18 @@
 #include <assert.h>
 #include "SurfaceGenerator.h"
 
-SurfaceGenerator::SurfaceGenerator(int uSegments, int vSegments, bool closeU, bool closeV) :
-_uSegments(uSegments), _vSegments(vSegments), _closeU(closeU), _closeV(closeV)
+// Return the packed buffer as a vector.
+void SurfaceGenerator::generate(int uSegments, int vSegments, bool closeU, bool closeV)
 {
-    // TODO: close flags not yet implemented; always assumes closed on both parameters.
+    _uSegments = uSegments;
+    _vSegments = vSegments;
+    _closeU = closeU;
+    _closeV = closeV;
+
     _uvVertex.resize(_uSegments * _vSegments);
     _uvNormal.resize(_uSegments * _vSegments, QVector3D(0, 0, 0));
     _divideCount.resize(_uSegments * _vSegments, 0);
-}
 
-// Return the packed buffer as a vector.
-const std::vector<float>& SurfaceGenerator::generate()
-{
     generateUVVertex();
     generateTrianglesAndUVs();
     generateNormals();
@@ -21,27 +21,10 @@ const std::vector<float>& SurfaceGenerator::generate()
     assert(_triangles.size() == _normals.size() && _triangles.size() == _uvs.size());
     assert(_triangles.size() % 3 == 0);
 
-    _vertexCount = (int)_triangles.size();
-    _buffer.resize(8*_vertexCount);
-
-    auto itCoord = _buffer.begin();
-    auto itNorm = itCoord + 3*_vertexCount;
-    auto itUV = itNorm + 3*_vertexCount;
-
-    for (auto i = 0; i < _triangles.size(); ++i) {
-        assign(3, _triangles[i], itCoord);
-        assign(3, _normals[i], itNorm);
-        assign(2, _uvs[i], itUV);
-    }
 
     _uvVertex.clear();
     _uvNormal.clear();
-    _triangles.clear();
-    _normals.clear();
-    _uvs.clear();
     _divideCount.clear();
-
-    return _buffer;
 }
 
 void SurfaceGenerator::generateUVVertex()
