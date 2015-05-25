@@ -52,19 +52,18 @@ class ProjectiveGenerator : public SurfaceGenerator
 protected:
     virtual QVector2D UV(int u, int v) const override
     {
-        float uu = (float)u / (getUSegmentCount() - 1);
-        float vv = (float)v / (getVSegmentCount() - 1);
+        float uu = (float)u / getUSegmentCount();
+        float vv = (float)v / getVSegmentCount();
         return QVector2D(uu, vv);
     }
 
     virtual QVector3D F(QVector2D uv) const override
     {
         static const float pi = 3.1416f;
-        double u = uv.x() * 2 * pi, v = uv.y() * pi / 2;
-        double cosu = cos(u), cosv = cos(v), sinu = sin(u), sinv = sin(v), sin2v = sin(2 * v);
-        double x = cosu * sin2v;
-        double y = sinu * sin2v;
-        double z = cosv*cosv - cosu*cosu * sinv*sinv;
+        double u = uv.x() * 2 * pi, v = uv.y() * 2 * pi;
+        double x = (1 + cos(v)) * cos(u);
+        double y = (1 + cos(v)) * sin(u);
+        double z = -tanh(u-pi) * sin(v);
         return QVector3D(x, y, z);
     }
 };
