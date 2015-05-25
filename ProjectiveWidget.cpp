@@ -75,7 +75,8 @@ void ProjectiveWidget::initializeGL()
 
     _segmentCount = 128;
     _cameraU = _cameraV = 0;
-    _cameraHeight = 0;
+    _cameraHeight = _cameraAt = 0;
+    _cameraFOV = 30;
 
     loadProgram();
     setupGeometry();
@@ -115,20 +116,31 @@ void ProjectiveWidget::paintGL()
 void ProjectiveWidget::resizeGL(int width, int height)
 {
     G->glViewport(0, 0, width, height);
+    _vpWidth = width; _vpHeight = height;
     setupCamera();
 }
 
 void ProjectiveWidget::setupCamera()
 {
-    /*
-    // 6 3-component vertices per UV pair.
-    int i = 6 * _cameraU * _segmentCount + _cameraV;
-    QVector3D eye(_shapeData[i], _shapeData[i+1], _shapeData[i+2]);
-    */
-    _cameraXform.setToIdentity();
-    //_cameraXform.lookAt();
+    QMatrix4x4 cameraXform, perspXform;
 
-    _xform = _cameraXform;
+    {
+        const int i = 6 * _shapeData.uvIndex(_cameraU, _cameraV);
+
+        auto triangles = _shapeData.getTriangles();
+        QVector3D eye = triangles[i];    // 6 value per uv index
+        QVector3D center = triangles[i+1];
+        center.setZ(_cameraHeight-1);
+
+        auto normals = _shapeData.getNormals();
+        QVector3D up(0, normals[i].y(), 0);// = normals[i];
+
+        cameraXform.lookAt(eye, center, up);
+    }
+
+    perspXform.perspective(_cameraFOV, (float)_vpWidth / _vpHeight, 1e-3f, 1e4f);
+
+    _xform = perspXform * cameraXform;
 }
 
 void ProjectiveWidget::setupGeometry()

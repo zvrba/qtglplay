@@ -28,6 +28,7 @@ public slots:
     void setCameraU(int u);
     void setCameraV(int v);
     void setCameraHeight(int height);
+    //void setCameraFOV(const QString &fov);
     void compileShaders();
     void cleanup();
 
@@ -47,13 +48,13 @@ private:
 
     // Camera position & orientation.
     int _segmentCount;
-    int _cameraU, _cameraV;
-    float _cameraHeight;
+    int _cameraU, _cameraV, _vpWidth, _vpHeight;
+    float _cameraHeight, _cameraAt, _cameraFOV;
 
     // OpenGL stuff.
     ProjectiveGenerator _shapeData;
     int _triangleCount;
-    QMatrix4x4 _cameraXform, _xform;
+    QMatrix4x4 _xform;
 
     QOpenGLFunctions_3_3_Core *G;
     GLuint _vao, _vbo[3], _tex;
