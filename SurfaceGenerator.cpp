@@ -15,7 +15,7 @@ void SurfaceGenerator::generate(int uSegments, int vSegments, bool closeU, bool 
 
     generateUVVertex();
     generateTrianglesAndUVs();
-    generateNormals();
+    generateFlatNormals();
 
     // Pack data into a single buffer.  We have 8 floats per triangle (position, normal, UV)
     assert(_triangles.size() == _normals.size() && _triangles.size() == _uvs.size());
@@ -47,7 +47,7 @@ void SurfaceGenerator::generateTrianglesAndUVs()
     }
 }
 
-void SurfaceGenerator::generateNormals()
+void SurfaceGenerator::generateSmoothNormals()
 {
     assert(_uvNormal.size() == _divideCount.size());
 
@@ -57,8 +57,20 @@ void SurfaceGenerator::generateNormals()
     for (int u = 0; u < _uSegments - 1 + _closeU; ++u)
     for (int v = 0; v < _vSegments - 1 + _closeV; ++v)
     {
-        halfQuadNormal(u, v, 0);
-        halfQuadNormal(u, v, 1);
+        halfQuadSmoothNormal(u, v, 0);
+        halfQuadSmoothNormal(u, v, 1);
+    }
+}
+
+void SurfaceGenerator::generateFlatNormals()
+{
+    assert(_uvNormal.size() == _divideCount.size());
+
+    for (int u = 0; u < _uSegments - 1 + _closeU; ++u)
+    for (int v = 0; v < _vSegments - 1 + _closeV; ++v)
+    {
+        halfQuadFlatNormal(u, v, 0);
+        halfQuadFlatNormal(u, v, 1);
     }
 }
 
@@ -68,7 +80,7 @@ void SurfaceGenerator::halfQuadVertex(int u, int v, int h)
     assert(h == 0 || h == 1);
     int u1 = (u+1) % _uSegments, v1 = (v+1) % _vSegments;
     int i[4] = { VI(u, v), VI(u1, v), VI(u1, v1), VI(u, v1) };
-    QVector3D c[3] = { _uvVertex[i[0]], _uvVertex[i[1 + h]], _uvVertex[i[2 + h]] };
+    QVector3D c[3] = { _uvVertex[i[0]], _uvVertex[i[1+h]], _uvVertex[i[2+h]] };
     QVector3D n = QVector3D::normal(c[0], c[1], c[2]);
     
     _triangles.push_back(c[0]);
@@ -90,7 +102,7 @@ void SurfaceGenerator::halfQuadVertex(int u, int v, int h)
     _uvNormal[i[2+h]] += n; ++_divideCount[i[2+h]];
 }
 
-void SurfaceGenerator::halfQuadNormal(int u, int v, int h)
+void SurfaceGenerator::halfQuadSmoothNormal(int u, int v, int h)
 {
     assert(h == 0 || h == 1);
     int u1 = (u + 1) % _uSegments, v1 = (v + 1) % _vSegments;
@@ -101,4 +113,15 @@ void SurfaceGenerator::halfQuadNormal(int u, int v, int h)
     _normals.push_back(_uvNormal[i[2+h]]);
 }
 
+void SurfaceGenerator::halfQuadFlatNormal(int u, int v, int h)
+{
+    assert(h == 0 || h == 1);
+    int u1 = (u + 1) % _uSegments, v1 = (v + 1) % _vSegments;
+    int i[4] = { VI(u, v), VI(u1, v), VI(u1, v1), VI(u, v1) };
+    QVector3D c[3] = { _uvVertex[i[0]], _uvVertex[i[1+h]], _uvVertex[i[2+h]] };
+    QVector3D n = QVector3D::normal(c[0], c[1], c[2]);
 
+    _normals.push_back(n);
+    _normals.push_back(n);
+    _normals.push_back(n);
+}

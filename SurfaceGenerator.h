@@ -21,9 +21,11 @@ class SurfaceGenerator
     
     void generateUVVertex();
     void generateTrianglesAndUVs();
-    void generateNormals();
+    void generateSmoothNormals();
+    void generateFlatNormals();
     void halfQuadVertex(int u, int v, int h);
-    void halfQuadNormal(int u, int v, int h);
+    void halfQuadSmoothNormal(int u, int v, int h);
+    void halfQuadFlatNormal(int u, int v, int h);
     
     template<typename T>
     static void assign(int n, T vec, std::vector<float>::iterator &it)
