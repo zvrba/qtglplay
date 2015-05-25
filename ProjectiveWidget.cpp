@@ -1,5 +1,6 @@
 #include <QKeyEvent>
 #include <QVector3D>
+#include <QtMath>
 #include "ProjectiveWidget.h"
 #include "SurfaceGenerator.h"
 
@@ -74,9 +75,8 @@ void ProjectiveWidget::initializeGL()
     G->glGenTextures(1, &_tex);
 
     _segmentCount = 128;
-    _cameraU = _cameraV = 0;
-    _cameraHeight = _cameraAt = 0;
-    _cameraFOV = 30;
+    _cameraU = _cameraV = _cameraHeading = _cameraHeight = _cameraTilt = 0;
+    _cameraFOV = 15;
 
     loadProgram();
     setupGeometry();
@@ -118,6 +118,56 @@ void ProjectiveWidget::resizeGL(int width, int height)
     G->glViewport(0, 0, width, height);
     _vpWidth = width; _vpHeight = height;
     setupCamera();
+}
+
+void ProjectiveWidget::keyPressEvent(QKeyEvent *ev)
+{
+    const float uvstep = 1e-2f;
+    const float htstep = 1e-1f;
+    bool changed1 = true, changed2 = true;
+
+    {
+        float move = 0;
+
+        switch (ev->key())
+        {
+        case Qt::Key_Down: move = -uvstep; break;
+        case Qt::Key_Up: move = uvstep; break;
+        case Qt::Key_Left: _cameraHeading = fmodf(_cameraHeading + 360 - 15, 360); break;
+        case Qt::Key_Right: _cameraHeading = fmodf(_cameraHeading + 15, 360); break;
+        default: changed1 = false;
+        }
+
+        _cameraU = fmodf(_cameraU + 1 + uvstep*cos(qDegreesToRadians(_cameraHeading)), 1);
+        _cameraV = fmodf(_cameraV + 1 + uvstep*sin(qDegreesToRadians(_cameraHeading)), 1);
+
+        if (changed1)
+            emit cameraSurfacePositionChanged(QVector3D(_cameraU, _cameraV, _cameraHeading));
+    }
+
+    {
+        if (ev->text().isEmpty())
+            return;
+
+        char key = ev->text().toLatin1().at(0);
+
+        switch (key)
+        {
+        case 'H': _cameraHeight += htstep; break;
+        case 'h': _cameraHeight -= htstep; break;
+        case 'T': _cameraTilt += htstep; break;
+        case 't': _cameraTilt -= htstep; break;
+        case 'F': _cameraFOV = qMax(60.f, _cameraFOV+5); break;
+        case 'f': _cameraFOV = qMin(5.f, _cameraFOV-5); break;
+        default: changed2 = false;
+        }
+
+        if (changed2)
+            emit cameraProjectionTargetChanged(QVector3D(_cameraHeight, _cameraTilt, _cameraFOV));
+    }
+
+    if (changed1 || changed2)
+        update();
 }
 
 void ProjectiveWidget::setupCamera()

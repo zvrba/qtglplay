@@ -33,12 +33,15 @@ public slots:
     void cleanup();
 
 signals:
+    void cameraSurfacePositionChanged(const QVector3D newPosition);
+    void cameraProjectionTargetChanged(const QVector3D newProjectionTarget);
     void compilationDone(const QString &msg);
 
 protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int width, int height) override;
+    void keyPressEvent(QKeyEvent *ev) override;
 
 private:
     void loadProgram();
@@ -48,8 +51,9 @@ private:
 
     // Camera position & orientation.
     int _segmentCount;
-    int _cameraU, _cameraV, _vpWidth, _vpHeight;
-    float _cameraHeight, _cameraAt, _cameraFOV;
+    int _vpWidth, _vpHeight;                        // viewport
+    float _cameraU, _cameraV, _cameraHeading;       // camera position & movement direction on the surface
+    float _cameraHeight, _cameraTilt, _cameraFOV;   // how high above camera is & up/down tilt
 
     // OpenGL stuff.
     ProjectiveGenerator _shapeData;
